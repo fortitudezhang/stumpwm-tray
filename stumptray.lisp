@@ -1,11 +1,13 @@
-(in-package :stumpwm)
-(require 'simpletray)
+(cl:in-package :stumpwm)
+;;(require :simpletray)
 
-(defun create-tray ()
-  (simpletray:create))
+(defcommand destroy-tray () ()
+    "Destroy the system tray."
+    (simpletray:destroy))
 
-(defun destroy-tray ()
-  (simpletray:destroy))
+(defcommand create-tray () ()
+    "Create the system tray."
+    (simpletray:create))
 
 (defcommand show-tray () ()
     "Shows the system tray."

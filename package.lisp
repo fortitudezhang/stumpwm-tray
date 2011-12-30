@@ -1,5 +1,5 @@
-(defpackage #:simpletray
-  (:use #:cl)
+(cl:defpackage :simpletray
+  (:use :cl)
   (:export 
       :create
       :destroy

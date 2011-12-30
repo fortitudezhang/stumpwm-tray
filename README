@@ -1,0 +1,10 @@
+What I have done to the original code:
+
+1. add loop form to handle x client doc request.
+2. cleanup code.
+
+What I got:
+1. Now it can display rhythmbox's tray icon and by click the icon I can get rhythmbox's window visible,then I can listen to the music:)
+2. It crashed a lot,there are more to do with the code,partly because I have only read the source code in spare time in two days.
+
+by fortitude.zhang, 2011/12/29
