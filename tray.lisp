@@ -1,9 +1,10 @@
-(cl:in-package :simpletray)
-(cl:use-package :stumpwm)
+(in-package :simpletray)
+(use-package :stumpwm)
 
 (require 'bordeaux-threads)
 
-(defparameter *traydisplay* nil)
+(defparameter *tray-thread* nil)
+(defparameter *tray-display* nil)
 (defparameter *tray-window* nil)
 (defparameter *root-window* nil)
 (defparameter *client-windows* nil)
@@ -189,7 +190,7 @@
 
 (defun tray (&optional (host ""))
   (with-open-file (stream "~/stumpwmtray.log" :direction :output)
-    (write-line "tray created" stream)
+    (write-line "tray created ~%" stream)
     (let* ((display (xlib:open-display host))
 	   (screen (first (xlib:display-roots display)))
 	   (black (xlib:screen-black-pixel screen))
@@ -209,7 +210,7 @@
 							 :key-press :visibility-change 
 							 :substructure-notify :substructure-redirect))))
       (setf *root-window* root-window)
-      (setf *traydisplay* display)
+      (setf *tray-display* display)
       (setf *tray-window* my-window)
       (setf *client-windows* nil)
 
@@ -255,14 +256,25 @@
 				(format stream "client msg receivied ~%")
 				(process-client-message my-window type format data)))))
 	(format stream "bye bye ~%")
-	(destroy)
+;;	(destroy), donnot call destroy,just close the connection
 	(xlib:close-display display)))))
 
 (defun create ()
-  (bordeaux-threads:make-thread 'tray :name "Tray: main loop thread"))
+  (setf *tray-thread* (bordeaux-threads:make-thread 'tray :name "Tray: main loop thread")))
+
+(defun destroy ()
+  ;; destroy the thread
+  (if (bordeaux-threads:threadp *tray-thread*)
+      (bordeaux-threads:destroy-thread  *tray-thread*))
+  ;; once we have closed the display,X related resources will be freed automatically by X server.
+  (if (xlib:display-p *tray-display*)
+      (xlib:close-display *tray-display*)))
 
 ;; FIXME,may be we should kill the thread by send an event,but how it free the x resources??
 ;; fortitude.zhang 2011/12/29
+;; X server will release the resouces once we close the connection,so we can just stop the
+;; thread and close the connection,no need to worry about resource release.
+;; fortitude.zhang 2012/1/1
 
 ;; (defun destroy ()
 ;;   (when (xlib:window-p *tray-window*)
