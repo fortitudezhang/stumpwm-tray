@@ -2,7 +2,4 @@
   (:use :cl)
   (:export 
       :create
-      :destroy
-      :hide
-      :show
-      :toggle))
+      :destroy))

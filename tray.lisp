@@ -1,5 +1,6 @@
 (in-package :simpletray)
-(use-package :stumpwm)
+;; no need use stumpwm currently
+;;(require 'stumpwm)
 
 (require 'bordeaux-threads)
 
@@ -8,8 +9,8 @@
 (defparameter *tray-window* nil)
 (defparameter *root-window* nil)
 (defparameter *client-windows* nil)
-(defparameter *tray-icon-width* 32)
-(defparameter *tray-icon-height* 32)
+(defparameter *tray-icon-width* 16)
+(defparameter *tray-icon-height* 16)
 (defparameter *tray-background-color* "green")
 
 (defconstant +xembed-protocol-version+ 1)
@@ -105,10 +106,11 @@
   (xlib:display-finish-output (xlib:window-display window)))
 
 (defun resize-drawable (drawable width height)
-  (format t "resizing drawable to ~a ~a ~%" width height)
+  ;; FIXME: add widht parameter to log
+  (log-flow-to-file "resizing drawable to ~a ~%" height)
   (unless (or (eq width 0) (eq height 0))
-    (setf (xlib:drawable-height drawable) width)
-    (setf (xlib:drawable-width drawable) height)))
+    (setf (xlib:drawable-height drawable) height)
+    (setf (xlib:drawable-width drawable) width)))
 
 (defun resize-icon (window width height)
   (resize-drawable window
@@ -122,7 +124,8 @@
   (xlib:display-finish-output (xlib:window-display window)))
 
 (defun position-subwindow (parent window x y)
-  (format t "positioning window at ~a ~a~%" x y)
+  ;; FIXME: add widht parameter to log
+  (log-flow-to-file "positioning window at ~a ~%" x)
   (xlib:reparent-window window parent x y)
   (xlib:display-finish-output (xlib:window-display window)))
 
@@ -150,10 +153,12 @@
 				  (xlib:drawable-height i)) 2)))
      summing *tray-icon-width* into total-width
      finally
-       (format t "Ancho = ~a Alto = ~a ~%" total-width *tray-icon-height*)
+       ;; FIXME
+       ;;(log-flow-to-file "Ancho = ~a Alto = ~a ~%" total-width *tray-icon-height*)
        (if (> total-width 0)
 	   (resize-window window total-width *tray-icon-height*)
-	   (resize-window window 1 1)))
+	   ;; always make it one icon size which make it looks pretty.
+	   (resize-window window *tray-icon-width* *tray-icon-height*)))
   nil)
 
 (defgeneric process-client-message (window type format data)
@@ -164,100 +169,101 @@
 
 (defmethod process-client-message (window (type (eql :_NET_SYSTEM_TRAY_OPCODE)) format data)
   (format t "Event type _NET_SYSTEM_TRAY_OPCODE~%")
+  (log-flow-to-file "Event type _NET_SYSTEM_TRAY_OPCODE with window ~A ~%" window)
   (case (aref data 1)
-    (0 (format t "Window ~a requests dock~%" (aref data 2))
+    (0 (log-flow-to-file "Window ~a requests dock~%" (aref data 2))
        (let* ((client-window (xlib::make-window :id (aref data 2) :display (xlib:window-display window)))
 	      ;;(client-protocol-version (xlib:get-property  client-window "_XEMBED_INFO" :type nil)))
 	      )
-	 (push client-window *client-windows*)
-	 (xlib:reparent-window client-window window 0 0)
-	 (format t "Window reparented~%")
-	 ;;(format t "Client XEMBED protocol version: ~a~%" client-protocol-version)
-	 (send-xembed-message window client-window +xembed-embedded-notify+)
-	 (format t "XEMBED embedded notify message sent to ~a ~%" (get-window-name client-window))
-	 (resize-drawable client-window
-			  *tray-icon-width*
-			  *tray-icon-height*)
-	 (reorganize-icons window *client-windows*)
-	 (xlib:map-window client-window)))
-    (1 (format t "Begin Message event~%"))
-    (2 (format t "End Message event~%"))
-    (otherwise (format t "Unknown message received.")))
+	 ;; FIXME: workaround for make-window cannot generate correct window type
+	 (if (xlib:window-p client-window)
+	     (progn
+	       (push client-window *client-windows*)
+	       (xlib:reparent-window client-window window 0 0)
+	       (log-flow-to-file "Window reparented~%")
+	       ;;(format t "Client XEMBED protocol version: ~a~%" client-protocol-version)
+	       (send-xembed-message window client-window +xembed-embedded-notify+)
+	       (log-flow-to-file "XEMBED embedded notify message sent to ~a ~%" (get-window-name client-window))
+	       (resize-drawable client-window
+				*tray-icon-width*
+				*tray-icon-height*)
+	       (reorganize-icons window *client-windows*)
+	       (xlib:map-window client-window))
+	     (log-flow-to-file "Cannnot generate window type~%"))))
+    (1 (log-flow-to-file "Begin Message event~%"))
+    (2 (log-flow-to-file "End Message event~%"))
+    (otherwise (log-flow-to-file "Unknown message received.")))
   nil)
 
 (defun alloc-color (screen color)
   (xlib:alloc-color (xlib:screen-default-colormap screen) color))
 
 (defun tray (&optional (host ""))
-  (with-open-file (stream "~/stumpwmtray.log" :direction :output)
-    (write-line "tray created ~%" stream)
-    (let* ((display (xlib:open-display host))
-	   (screen (first (xlib:display-roots display)))
-	   (black (xlib:screen-black-pixel screen))
-	   (root-window (xlib:screen-root screen))
-	   (my-window (xlib:create-window
-		       :parent root-window
-		       :x -1
-		       :y -1
-		       ;;		     :depth 24
-		       :width 85
-		       :height 50
-		       ;;		     :background black
-		       ;; here we directly use the non-export symbol of stumpwm
-		       :background (alloc-color screen *tray-background-color*)
+  (log-flow-to-file "tray thread enter ~%")
+  (let* ((display (xlib:open-display host))
+	 (screen (first (xlib:display-roots display)))
+	 (black (xlib:screen-black-pixel screen))
+	 (root-window (xlib:screen-root screen))
+	 (my-window (xlib:create-window
+		     :parent root-window
+		     :x -1
+		     :y -1
+		     ;;		     :depth 24
+		     :width *tray-icon-width*
+		     :height *tray-icon-height*
+		     ;;		     :background black
+		     ;; here we directly use the non-export symbol of stumpwm
+		     :background (alloc-color screen *tray-background-color*)
 					;:override-redirect :ON
-		       :event-mask (xlib:make-event-mask :exposure :property-change 
-							 :key-press :visibility-change 
-							 :substructure-notify :substructure-redirect))))
-      (setf *root-window* root-window)
-      (setf *tray-display* display)
-      (setf *tray-window* my-window)
-      (setf *client-windows* nil)
+		     :event-mask (xlib:make-event-mask :exposure :property-change 
+						       :key-press :visibility-change 
+						       :substructure-notify :substructure-redirect))))
+    (setf *root-window* root-window)
+    (setf *tray-display* display)
+    (setf *tray-window* my-window)
+    (setf *client-windows* nil)
 
-      (xlib:change-property my-window 
-			    :WM_TRANSIENT_FOR (list (xlib:window-id root-window))
-			    :WINDOW 32)
-      
-      (xlib:change-property *tray-window* 
-			    :WM_NAME (coerce "Stumpwm system tray" 'list) 
-			    :STRING 8 :transform #'char-code)
+    (xlib:change-property my-window 
+			  :WM_TRANSIENT_FOR (list (xlib:window-id root-window))
+			  :WINDOW 32)
+    
+    (xlib:change-property *tray-window* 
+			  :WM_NAME (coerce "Stumpwm system tray" 'list) 
+			  :STRING 8 :transform #'char-code)
 
-      (xlib:change-property *tray-window* 
-			    :_NET_WM_NAME (coerce "Stumpwm system tray" 'list) 
-			    :UTF8_STRING 8 :transform #'char-code)
+    (xlib:change-property *tray-window* 
+			  :_NET_WM_NAME (coerce "Stumpwm system tray" 'list) 
+			  :UTF8_STRING 8 :transform #'char-code)
 
-      (xlib:map-window my-window)
+    (xlib:map-window my-window)
 
-      ;; FIXME, change S0 with Sn(n is calculated by aquire screen number)
-      (when (acquire-selection my-window :_NET_SYSTEM_TRAY_S0)
-	(format t "Selection acquired~%")
-	(format stream "X Selection acquired ~%")
-	;; Loop until we die!
-	(catch 'destroy
-	  (loop
-	     (xlib:event-case (display :force-output-p t
-				       :discard-p t)
-	       (:selection-request () (format t "Selection request event~%"))
-	       (:selection-notify () (format t "Selection notify event~%"))
-	       (:selection-clear () (format t "Selection clear event~%") t)
-	       (:property-notify (atom state time window) (format t "Property notify (~a) ~a ~a ~a~%" window atom state time))
+    ;; FIXME, change S0 with Sn(n is calculated by aquire screen number)
+    (when (acquire-selection my-window :_NET_SYSTEM_TRAY_S0)
+      (format t "Selection acquired~%")
+      ;; Loop until we die!
+      (catch 'destroy
+	(loop
+	   (xlib:event-case (display :force-output-p t
+				     :discard-p t)
+	     (:selection-request () (format t "Selection request event~%"))
+	     (:selection-notify () (format t "Selection notify event~%"))
+	     (:selection-clear () (format t "Selection clear event~%") t)
+	     (:property-notify (atom state time window) (format t "Property notify (~a) ~a ~a ~a~%" window atom state time))
 					;(:key-press () (format t "Key press event~%") (process-click) nil)
-	       (:visibility-notify (state) (visibility-changed my-window state) nil)
-	       (:configure-request (width height x y window) 
-				   (format t "W: ~a H: ~a X: ~a Y: ~a from window: ~a~%" width height x y window) 
-				   (resize-icon window width height)
-				   (reorganize-icons my-window *client-windows*)
-				   nil)
-	       (:destroy-notify (window) (format t "Window ~a destroyed~%" window) 
-				(remove-client window) 
-				(reorganize-icons my-window *client-windows*)
-				throw 'destroy)
-	       (:client-message (type format data)
-				(format stream "client msg receivied ~%")
-				(process-client-message my-window type format data)))))
-	(format stream "bye bye ~%")
-;;	(destroy), donnot call destroy,just close the connection
-	(xlib:close-display display)))))
+	     (:visibility-notify (state) (visibility-changed my-window state) nil)
+	     (:configure-request (width height x y window) 
+				 (format t "W: ~a H: ~a X: ~a Y: ~a from window: ~a~%" width height x y window) 
+				 (resize-icon window width height)
+				 (reorganize-icons my-window *client-windows*)
+				 nil)
+	     (:destroy-notify (window) (format t "Window ~a destroyed~%" window) 
+			      (remove-client window) 
+			      (reorganize-icons my-window *client-windows*)
+			      throw 'destroy)
+	     (:client-message (type format data)
+			      (process-client-message my-window type format data)))))
+      (xlib:close-display display))))
+
 
 (defun create ()
   (setf *tray-thread* (bordeaux-threads:make-thread 'tray :name "Tray: main loop thread")))
@@ -269,34 +275,3 @@
   ;; once we have closed the display,X related resources will be freed automatically by X server.
   (if (xlib:display-p *tray-display*)
       (xlib:close-display *tray-display*)))
-
-;; FIXME,may be we should kill the thread by send an event,but how it free the x resources??
-;; fortitude.zhang 2011/12/29
-;; X server will release the resouces once we close the connection,so we can just stop the
-;; thread and close the connection,no need to worry about resource release.
-;; fortitude.zhang 2012/1/1
-
-;; (defun destroy ()
-;;   (when (xlib:window-p *tray-window*)
-;;     (let ((window *tray-window*))
-;;       (setf *tray-window* nil)
-;;       (xlib:destroy-window window))))
-
-;; (defun hide ()
-;;   (when (xlib:window-p *tray-window*)
-;;     (xlib:unmap-window *tray-window*)
-;;     (xlib:display-finish-output (xlib:window-display *tray-window*))))
-
-;; (defun show ()
-;;   (when (xlib:window-p *tray-window*)
-;;     (xlib:map-window *tray-window*)
-;;     (xlib:display-finish-output (xlib:window-display *tray-window*))
-;;     (reorganize-icons *tray-window* *client-windows*)))
-
-;; (defun toggle ()
-;;   (when (xlib:window-p *tray-window*)
-;;     (if (eq (xlib:window-map-state *tray-window*)
-;; 	    :viewable)
-;; 	(hide)
-;; 	(show))))
-
