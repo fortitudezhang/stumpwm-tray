@@ -1,7 +1,7 @@
 README(English):
 
 stumpwm-tray is a tray application for stumpwm.I have forked the orignal code from https://github.com/lucashpandolfo,
-give my thansk to him:)
+give my thanks to him:)
 
 However,the forked code could not work properly,so I made some hack in order to make it usable.Now it can work with
 tray icon(like rhytmbox、stardict etc.) correctly.
@@ -16,7 +16,7 @@ But there is still some problems I need to fix:
 ====================================================================
 
 README(Simplified Chinese):
-stumpwm-tray是一款面向stumpwm的tray应用。我从https://github.com/lucashpandolfo克隆了原代码，谢谢他。
+stumpwm-tray是一款面向stumpwm的tray应用。我从https://github.com/lucashpandolfo 克隆了原代码，谢谢他。
 
 然而，克隆下来的代码并不能正常工作，因此我进行了些修改使其可用。它现在可以和一些支持tray icon的应用一起正常工作（如rhythmbox、stardict等）。
 
