@@ -13,7 +13,7 @@
 		   :category-spec '(flow-log)  
 		   :output-spec '(log5:time log5:message log5:category)) 
 
-;; FIXME: fix args list
-(defun log-flow-to-file (log-string &rest log-items)
-  (if *tray-log-enable*
-      (log5:log-for (flow-log) log-string log-items)))
+(defmacro log-flow-to-file (log-string &rest log-items)
+  `(if *tray-log-enable*
+      ;; slice the log-items
+      (log5:log-for (flow-log) ,log-string ,@log-items)))

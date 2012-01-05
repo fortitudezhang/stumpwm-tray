@@ -106,8 +106,7 @@
   (xlib:display-finish-output (xlib:window-display window)))
 
 (defun resize-drawable (drawable width height)
-  ;; FIXME: add widht parameter to log
-  (log-flow-to-file "resizing drawable to ~a ~%" height)
+  (log-flow-to-file "resizing drawable to ~a ~a ~%" width height)
   (unless (or (eq width 0) (eq height 0))
     (setf (xlib:drawable-height drawable) height)
     (setf (xlib:drawable-width drawable) width)))
@@ -124,8 +123,7 @@
   (xlib:display-finish-output (xlib:window-display window)))
 
 (defun position-subwindow (parent window x y)
-  ;; FIXME: add widht parameter to log
-  (log-flow-to-file "positioning window at ~a ~%" x)
+  (log-flow-to-file "positioning window at ~a ~a ~%" x y)
   (xlib:reparent-window window parent x y)
   (xlib:display-finish-output (xlib:window-display window)))
 
@@ -153,8 +151,7 @@
 				  (xlib:drawable-height i)) 2)))
      summing *tray-icon-width* into total-width
      finally
-       ;; FIXME
-       ;;(log-flow-to-file "Ancho = ~a Alto = ~a ~%" total-width *tray-icon-height*)
+       (log-flow-to-file "Ancho = ~a Alto = ~a ~%" total-width *tray-icon-height*)
        (if (> total-width 0)
 	   (resize-window window total-width *tray-icon-height*)
 	   ;; always make it one icon size which make it looks pretty.
