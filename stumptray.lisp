@@ -1,5 +1,5 @@
 (cl:in-package :stumpwm)
-;;(require :simpletray)
+(require :simpletray)
 
 (defcommand destroy-tray () ()
     "Destroy the system tray."

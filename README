@@ -9,9 +9,6 @@ tray icon(like rhytmbox、stardict etc.) correctly.
 But there is still some problems I need to fix:
 1. When run rhytmbox from command line(not by stumpwm's run-shell-command),the tray icon cannot be added to the 
    tray window,and sometimes clx will complaint for wrong type(I donnot know whether this is clx's issue).
-2. I need to write a correct asdf definition file.
-3. I need to write a INSTALL file(Now I just load the four lisp file in my environment,you can check out my stumpwmrc
-   from fortitude-home repo).
 
 ====================================================================
 
@@ -23,5 +20,3 @@ stumpwm-tray是一款面向stumpwm的tray应用。我从https://github.com/lucas
 但是，目前仍一些问题有待解决：
 1、当从命令行，而不是使用stumpwm提供的run-shell-command命令中启动rhythmbox时，tray icon不能被正确添加，并且有时clx会报window error
    这个错误（不知道是否是clx的问题）。
-2、我需要写一个正确的asdf定义文件。
-3、我需要写一个安装说明（目前我直接将四个lisp文件加载，你可以查看我的fortitude-home仓库中的stumpwmrc文件）。

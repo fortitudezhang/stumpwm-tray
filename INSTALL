@@ -1,0 +1,34 @@
+DEPENDS:
+1. clx
+2. bordeaux-threads
+3. log5
+
+INSTALL METHODS:
+
+Add the following code to your .stumpwmrc file,
+;; Load stumpwm tray.
+(load "~/Source/stumpwm-tray/stumptray.lisp")
+;; Define the two command to control tray create and destroy.
+(defcommand create-tray () ()
+  (simpletray:create))
+(defcommand destroy-tray () ()
+  (simpletray:destroy))
+
+
+============================================
+
+依赖:
+1. clx
+2. bordeaux-threads
+3. log5
+
+安装方式:
+
+将以下代码添加至你的.stumpwmrc文件，
+;; Load stumpwm tray.
+(load "~/Source/stumpwm-tray/stumptray.lisp")
+;; Define the two command to control tray create and destroy.
+(defcommand create-tray () ()
+  (simpletray:create))
+(defcommand destroy-tray () ()
+  (simpletray:destroy))
